@@ -1,0 +1,1 @@
+SONGS_PATH = "songs"
