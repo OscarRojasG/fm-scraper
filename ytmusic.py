@@ -72,6 +72,7 @@ def add_songs_to_playlist(ytmusic: YTMusic, playlist_name, songs, start=None, en
         for result in results:
             if result['resultType'] == 'song' or result['resultType'] == 'video':
                 song_id = result['videoId']
+                print(result['title'])
                 break
 
         ytmusic.add_playlist_items(playlist_id, [song_id])
@@ -107,8 +108,8 @@ def main():
     songs = read_csv(filename)
     playlist_name = os.path.splitext(filename)[0]
 
-    start = 286
-    end = 300
+    start = 335
+    end = None
     
     add_songs_to_playlist(ytmusic, playlist_name, songs, start, end)
 
