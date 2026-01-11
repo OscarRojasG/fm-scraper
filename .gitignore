@@ -216,7 +216,10 @@ __marimo__/
 .streamlit/secrets.toml
 
 # Extra
-songs
 oauth.json
 browser.json
 playlists.json
+songs
+data
+radio
+cookies.txt

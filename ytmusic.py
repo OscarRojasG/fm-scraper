@@ -4,14 +4,30 @@ from dotenv import load_dotenv
 import os
 import csv
 import json
-from settings import SONGS_PATH, PLAYLISTS_FILE
+import glob
+from settings import SONGS_PATH, PLAYLISTS_FILE, DATA_FOLDER, DEFAULT_DATA_FILE
 
 
-def read_csv(filename):
-    with open(os.path.join(SONGS_PATH, filename), newline="", encoding="utf-8") as file:
-        csv_file = csv.reader(file)
-        header = next(csv_file)
-        return list(csv_file)
+def read_songs():
+    songs = []
+    for filename in glob.glob(os.path.join(SONGS_PATH, "*.csv")):
+        with open(filename, newline="", encoding="utf-8") as file:
+            csv_file = csv.reader(file)
+            header = next(csv_file)
+            songs += list(csv_file)
+    return songs
+    
+
+def read_data(filename=DEFAULT_DATA_FILE):
+    os.makedirs(DATA_FOLDER, exist_ok=True)
+    path = os.path.join(DATA_FOLDER, filename)
+
+    if os.path.exists(path):
+        with open(path, "r", encoding="utf-8", newline="") as f:
+            reader = csv.reader(f)
+            next(reader, None)  # Saltar encabezados
+            return [tuple(row) for row in reader]
+    return []
     
 
 def create_playlist(ytmusic: YTMusic, name: str):
@@ -79,6 +95,68 @@ def add_songs_to_playlist(ytmusic: YTMusic, playlist_name, songs, start=None, en
         print(f"✅ Canción añadida: {song[1]} - {song[0]} ({i})")
 
 
+def get_unique(songs: list):
+    unique = set()
+    for song in songs:
+        unique.add((song[0], song[1]))
+    return unique
+
+
+def get_pending(songs: list):
+    songs = get_unique(songs)
+    data = read_data()
+
+    entries = set((entry[0], entry[1]) for entry in data)
+    return songs - entries
+
+
+def populate_data(ytmusic: YTMusic, populate_limit=None, filename=DEFAULT_DATA_FILE):
+    songs = read_songs()
+    songs = get_pending(songs)
+
+    if populate_limit is None:
+        populate_limit = len(songs)
+
+    entries = []
+
+    for i, song in enumerate(songs):
+        if i == populate_limit:
+            break
+
+        query = f"{song[0]} {song[1]}"
+        result = ytmusic.search(query, filter='songs', limit=1)[0]
+        song_id = result['videoId']
+        entries.append((song[0], song[1], song_id))
+
+    # Leer datos antiguos y combinarlos
+    data = read_data()
+    data += entries
+
+    # Guardar en CSV
+    with open(os.path.join(DATA_FOLDER, filename), "w", encoding="utf-8", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["artist", "name", "id"])
+        writer.writerows(data)
+
+
+def auth():
+    AUTHORIZATION = os.getenv('AUTHORIZATION')
+    COOKIE = os.getenv('COOKIE')
+
+    headers = {
+        "Accept": "*/*",
+        "Authorization": AUTHORIZATION,
+        "Content-Type": "application/json",
+        "X-Goog-AuthUser": "0",
+        "x-origin": "https://music.youtube.com",
+        "Cookie": COOKIE
+    }
+    headers_raw = "\n".join(f"{k}: {v}" for k, v in headers.items())
+
+    ytmusicapi.setup(filepath="browser.json", headers_raw=headers_raw)
+    return YTMusic('browser.json')
+
+
 def main():
     load_dotenv()
     """
@@ -105,7 +183,7 @@ def main():
     ytmusic = YTMusic('browser.json')
 
     filename = "31-12-2025.csv"
-    songs = read_csv(filename)
+    songs = read_songs(filename)
     playlist_name = os.path.splitext(filename)[0]
 
     start = 335
