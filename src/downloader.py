@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 from yt_dlp import YoutubeDL
 import yt_dlp.utils
-from settings import DOWNLOADS_PATH
+from .settings import DOWNLOADS_PATH
 import os
 import glob
 from dotenv import load_dotenv

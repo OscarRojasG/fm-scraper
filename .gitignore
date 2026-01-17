@@ -219,7 +219,7 @@ __marimo__/
 oauth.json
 browser.json
 playlists.json
-songs
-data
-radio
+/songs
+/data
+/radio
 cookies.txt

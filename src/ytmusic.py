@@ -5,7 +5,7 @@ import os
 import csv
 import json
 import glob
-from settings import SONGS_PATH, PLAYLISTS_FILE, DATA_FOLDER, DEFAULT_DATA_FILE
+from .settings import SONGS_PATH, PLAYLISTS_FILE, DATA_FOLDER, DEFAULT_DATA_FILE
 
 
 def read_songs():
